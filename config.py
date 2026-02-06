@@ -27,7 +27,7 @@ class Config:
         PASS = os.getenv('MYSQL_PASSWORD', '') 
         HOST = os.getenv('MYSQL_HOST', 'localhost')
         PORT = os.getenv('MYSQL_PORT', '3306')
-        DB   = os.getenv('MYSQL_DB', 'sistema_municipal')
+        DB   = os.getenv('MYSQL_DB', 'sistema_empresas')
         XAMPP_SOCKET = '/opt/lampp/var/mysql/mysql.sock'
         
         if os.path.exists(XAMPP_SOCKET):
