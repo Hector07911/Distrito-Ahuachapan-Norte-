@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row justify-between items-end gap-4">
+    <div>
+        <h3 class="text-3xl font-bold text-slate-900 tracking-tight">Expediente de Contribuyente</h3>
+        <p class="text-slate-500 mt-2">Detalle integral del establecimiento y su historial</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <!-- Botón Volver -->
+        <button onclick="history.back()"
+            class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </button>
+
+        <!-- Botón Editar -->
+        <a href="{{ url_for('main.editar_empresa', id=empresa.id) }}"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+            <i class="fas fa-edit"></i> Editar
+        </a>
+
+        <!-- Botón Eliminar (Solo Admin) -->
+        {% if current_user.role.nombre == 'ADMIN' %}
+        <form action="{{ url_for('main.eliminar_empresa', id=empresa.id) }}" method="POST"
+            onsubmit="return confirm('⚠️ ¿ELIMINAR EXPEDIENTE?\n\nSe borrará todo el historial de esta empresa permanentemente.\n\n¿Estás seguro?');"
+            class="inline-block">
+            <button type="submit"
+                class="bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-200 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- INFO EXTRA HEADER -->
+<div class="mb-8 flex justify-end">
+    <div class="text-right bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100">
+        <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Código CAT</p>
+        <p class="text-xl font-black text-slate-800">{{ empresa.codigo }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- COLUMNA IZQUIERDA: INFORMACIÓN BÁSICA -->
+    <div class="space-y-6">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-2xl">
+                    <i class="fas fa-building fa-lg"></i>
+                </div>
+                <div>
+                    <h4 class="font-black text-slate-800 uppercase leading-none">{{ empresa.nombre_negocio }}</h4>
+                    <span
+                        class="text-[10px] font-bold uppercase {{ 'text-emerald-500' if empresa.estado_actual == 'ACTIVO' else 'text-rose-500' }}">
+                        {{ empresa.estado_actual }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Propietario</p>
+                    <p class="text-sm font-bold text-slate-700">{{ empresa.propietario or 'No registrado' }}</p>
+                </div>
+                {% if empresa.giro %}
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Giro del Negocio</p>
+                    <p class="text-sm font-bold text-slate-700">{{ empresa.giro }}</p>
+                </div>
+                {% endif %}
+                {% if empresa.direccion %}
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dirección</p>
+                    <p class="text-sm font-bold text-slate-700">{{ empresa.direccion }}</p>
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ubicación / Distrito</p>
+                    <p class="text-sm font-bold text-slate-700">{{ empresa.distrito or 'ATIQUIZAYA' }}</p>
+                </div>
+                {% if empresa.nit or empresa.nrc %}
+                <div class="grid grid-cols-2 gap-3">
+                    {% if empresa.nit %}
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NIT</p>
+                        <p class="text-xs font-mono font-bold text-slate-700">{{ empresa.nit }}</p>
+                    </div>
+                    {% endif %}
+                    {% if empresa.nrc %}
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NRC</p>
+                        <p class="text-xs font-mono font-bold text-slate-700">{{ empresa.nrc }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fecha Registro</p>
+                    <p class="text-sm font-bold text-slate-700">{{ empresa.fecha_inscripcion.strftime('%d/%m/%Y') if
+                        empresa.fecha_inscripcion else '—' }}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if empresa.notas %}
+        <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-4">Notas / Observaciones Internas
+            </h4>
+            <div class="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm">
+                <p class="text-sm text-slate-700 leading-relaxed italic">
+                    <i class="fas fa-quote-left text-blue-200 me-2"></i>
+                    {{ empresa.notas }}
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Contactos</h4>
+            <div class="space-y-3">
+                {% for c in empresa.contactos %}
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-xl text-slate-500">
+                        <i class="fas {{ 'fa-phone' if c.tipo == 'TELEFONO' else 'fa-envelope' }} text-xs"></i>
+                    </div>
+                    <p class="text-sm font-medium text-slate-600">{{ c.valor }}</p>
+                </div>
+                {% else %}
+                <p class="text-xs italic text-slate-400">Sin contactos registrados</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if empresa.estado_actual == 'CERRADO' and empresa.cerradas %}
+        <div class="bg-rose-50 p-6 rounded-3xl border border-rose-100">
+            <h4 class="text-xs font-black text-rose-600 uppercase tracking-widest mb-4">Datos de la Baja</h4>
+            {% for c in empresa.cerradas %}
+            <div class="space-y-2">
+                <p class="text-sm font-bold text-rose-800"><i class="fas fa-calendar-times me-2"></i>{{
+                    c.fecha.strftime('%d/%m/%Y') if c.fecha else 'Fecha no registrada' }}</p>
+                <p class="text-xs text-rose-600 font-medium italic">"{{ c.razon or 'Sin motivo detallado' }}"</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- COLUMNA DERECHA: HISTORIALES -->
+    <div class="lg:col-span-2 space-y-8">
+        <!-- TABLA DE IMPUESTOS -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Historial de Impuestos</h4>
+                <span
+                    class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-lg uppercase">Mensualidades</span>
+            </div>
+            <table class="w-full">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase">Año</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase">Cuota Mensual
+                        </th>
+                        <th class="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for pago in empresa.pagos | sort(attribute='anio', reverse=true) %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ pago.anio }}</td>
+                        <td class="px-6 py-4 text-sm font-mono font-black text-blue-600">${{
+                            "%.2f"|format(pago.monto_mensual) }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span
+                                class="px-2 py-1 text-[10px] font-bold rounded-md bg-blue-50 text-blue-500">REGISTRADO</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-8 text-center text-slate-400 italic text-sm">No hay registros de
+                            pagos</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- TABLA DE INSPECCIONES -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h4 class="text-sm font-black text-slate-800 uppercase tracking-wider">Historial de Inspecciones</h4>
+                <span
+                    class="text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-1 rounded-lg uppercase">Técnico</span>
+            </div>
+            <table class="w-full">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase">Fecha</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase">Inspector</th>
+                        <th class="px-6 py-3 text-center text-[10px] font-bold text-slate-500 uppercase">Resultado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for i in empresa.inspecciones | sort(attribute='fecha', reverse=true) %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ i.fecha.strftime('%d/%m/%Y') if
+                            i.fecha else '—' }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">{{ i.inspector or 'S/N' }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span
+                                class="px-2 py-1 text-[10px] font-bold rounded-md {{ 'bg-emerald-50 text-emerald-500' if i.estado == 'COMPLETADO' else 'bg-amber-50 text-amber-500' }}">
+                                {{ i.estado or 'PENDIENTE' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-8 text-center text-slate-400 italic text-sm">No se han realizado
+                            inspecciones</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

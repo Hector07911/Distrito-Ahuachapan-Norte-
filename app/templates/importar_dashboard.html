@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">
+    Hojas detectadas en el Excel
+</h2>
+
+<div class="bg-white rounded shadow p-4 mb-6">
+    <table class="w-full border-collapse">
+        <thead>
+            <tr class="border-b bg-gray-50">
+                <th class="text-left py-2 px-2">Hoja</th>
+                <th class="text-left py-2 px-2">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hoja in hojas %}
+            <tr class="border-b hover:bg-gray-50">
+                <td class="py-2 px-2 font-medium">{{ hoja }}</td>
+                <td class="py-2 px-2 text-sm text-gray-600">
+                    Detectada
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="flex justify-end">
+    <form method="POST" action="{{ url_for('main.importar_procesar') }}" class="mt-4">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Procesar archivo completo
+        </button>
+    </form>
+</div>
+
+{% endblock %}

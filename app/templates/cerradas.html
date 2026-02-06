@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h3 class="text-3xl font-bold text-slate-900 tracking-tight">Empresas Cerradas</h3>
+    <p class="text-slate-500 mt-2">Historial de empresas que han cesado operaciones en el municipio.</p>
+</div>
+
+<div class="space-y-10">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+            <div>
+                <h4 class="text-lg font-bold text-slate-800">Registros del Sistema</h4>
+                <p class="text-xs text-slate-500 font-medium">Datos centralizados en la base de datos municipal</p>
+            </div>
+            <div class="flex items-center gap-2 text-rose-600 bg-rose-50 px-3 py-1 rounded-lg border border-rose-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span class="text-xs font-bold uppercase tracking-wider">Cierres Confirmados</span>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <table id="tabla-cerradas-sistema" class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Empresa</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Razón
+                            / Motivo</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha
+                            de Cierre</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-slate-200">
+                    {% for e, c in cerradas_list %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-900">{{ e.nombre_negocio }}</div>
+                            <div class="text-xs text-slate-500 font-mono">{{ e.codigo }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="px-2 py-1 text-[10px] font-black rounded-md w-fit {{ 'bg-slate-100 text-slate-600' if e.estado_actual == 'CERRADO' else 'bg-rose-100 text-rose-600' }}">
+                                    {{ e.estado_actual }}
+                                </span>
+                                <span class="text-xs text-slate-500 italic">
+                                    {{ c.razon or 'Sin motivo detallado' }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-slate-900">
+                                {{ c.fecha.strftime('%d/%m/%Y') if c.fecha else '—' }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <a href="{{ url_for('main.detalle_empresa', id=e.id) }}"
+                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-eye me-1"></i> EXPEDIENTE
+                            </a>
+                            {% if current_user.role.nombre == 'ADMIN' %}
+                            <form action="{{ url_for('main.eliminar_empresa', id=e.id) }}" method="POST"
+                                class="inline-block ms-1"
+                                onsubmit="return confirm('⚠️ ¿Borrar permanentemente esta empresa cerrada?');">
+                                <button type="submit"
+                                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-rose-700 bg-rose-100 hover:bg-rose-200 transition-colors">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if excel %}
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden opacity-80">
+        <div class="p-6 border-b border-slate-200 bg-slate-100">
+            <h4 class="text-lg font-bold text-slate-700 italic">Referencia Histórica (Excel)</h4>
+        </div>
+        <div class="overflow-x-auto p-4">
+            <table id="tabla-excel-legacy" class="min-w-full text-xs text-slate-500">
+                <thead>
+                    <tr>
+                        {% for col in excel[0].keys() %}
+                        <th class="px-4 py-2 border-b text-left">{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in excel %}
+                    <tr>
+                        {% for value in row.values() %}
+                        <td class="px-4 py-2 border-b">{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<style>
+    /* Estilos personalizados para integrar DataTables con Tailwind */
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #f43f5e !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 0.5rem;
+    }
+
+    .dataTables_info,
+    .dataTables_length,
+    .dataTables_filter {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        // Inicialización de la tabla principal
+        $('#tabla-cerradas-sistema').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            },
+            "pageLength": 10,
+            "order": [[2, "desc"]], // Ordenar por fecha de cierre por defecto
+            "dom": '<"flex flex-col md:flex-row justify-between items-center mb-4"lf>rt<"flex flex-col md:flex-row justify-between items-center mt-4"ip>',
+        });
+
+        // Inicialización opcional de la tabla Excel
+        if ($('#tabla-excel-legacy').length) {
+            $('#tabla-excel-legacy').DataTable({
+                "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json" },
+                "pageLength": 5
+            });
+        }
+    });
+</script>
+{% endblock %}

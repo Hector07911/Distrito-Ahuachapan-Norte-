@@ -1,0 +1,8 @@
+.nav-link {
+    @apply text-gray-300 hover:text-white transition;
+}
+
+.fila-alerta {
+    background-color: #fff7ed;
+    /* naranja suave */
+}

@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h3 class="text-3xl font-bold text-slate-900 tracking-tight">Listado General de Empresas</h3>
+        <p class="text-slate-500 mt-2">Negocios registrados en el municipio</p>
+    </div>
+    <a href="{{ url_for('main.nueva_empresa') }}"
+        class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm transition-all flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Nueva Empresa
+    </a>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table id="tabla-empresas" class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Código
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Negocio /
+                        Propietario</th>
+                    <th scope="col"
+                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contactos
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Estado
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones
+                    </th>
+                </tr>
+                <!-- FILA DE FILTROS -->
+                <tr class="bg-gradient-to-r from-slate-50 to-blue-50 border-b-2 border-blue-200">
+                    <th class="px-4 py-3"><input type="text" placeholder="🔍 Código..."
+                            class="column-filter w-full text-sm px-3 py-2 rounded-lg border-2 border-slate-300 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                    </th>
+                    <th class="px-4 py-3"><input type="text" placeholder="🔍 Negocio o Propietario..."
+                            class="column-filter w-full text-sm px-3 py-2 rounded-lg border-2 border-slate-300 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                    </th>
+                    <th class="px-4 py-3"><input type="text" placeholder="🔍 Email o Teléfono..."
+                            class="column-filter w-full text-sm px-3 py-2 rounded-lg border-2 border-slate-300 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all">
+                    </th>
+                    <th class="px-4 py-3">
+                        <select
+                            class="column-filter w-full text-sm px-3 py-2 rounded-lg border-2 border-slate-300 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-semibold">
+                            <option value="">📋 Todos los Estados</option>
+                            <option value="SOLICITUD">📝 SOLICITUD</option>
+                            <option value="EN TRAMITE">⏳ EN TRÁMITE</option>
+                            <option value="ACTIVO">✅ ACTIVO</option>
+                            <option value="CERRADO">❌ CERRADO</option>
+                            <option value="INACTIVO">⏸️ INACTIVO</option>
+                            <option value="SUSPENDIDO">⚠️ SUSPENDIDO</option>
+                            <option value="CANCELADO">🚫 CANCELADO</option>
+                        </select>
+                    </th>
+                    <th class="px-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+                {% for empresa in empresas %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                            {{ empresa.codigo }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-bold text-slate-900">{{ empresa.nombre_negocio }}</div>
+                        <div class="text-xs text-slate-500">{{ empresa.propietario or '—' }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-2">
+                            {% for contacto in empresa.contactos %}
+                            {% if contacto.tipo == 'TELEFONO' %}
+                            <span
+                                class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                {{ contacto.valor }}
+                            </span>
+                            {% else %}
+                            <span
+                                class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                {{ contacto.valor }}
+                            </span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-xs text-slate-400 italic">Sin contactos</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if empresa.estado_actual == 'ACTIVO' %}
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            {{ empresa.estado_actual }}
+                        </span>
+                        {% elif empresa.estado_actual == 'CERRADO' %}
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                            {{ empresa.estado_actual }}
+                        </span>
+                        {% else %}
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            {{ empresa.estado_actual }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <a href="{{ url_for('main.detalle_empresa', id=empresa.id) }}"
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors uppercase">
+                            <i class="fas fa-eye me-1"></i> Expediente
+                        </a>
+
+                        {% if current_user.role.nombre == 'ADMIN' %}
+                        <form action="{{ url_for('main.eliminar_empresa', id=empresa.id) }}" method="POST"
+                            class="inline-block ms-1"
+                            onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR PERMANENTEMENTE esta empresa?\n\nEsta acción borrará:\n- Datos del negocio\n- Historial de pagos\n- Registros de inspecciones\n\nNo se puede deshacer.');">
+                            <button type="submit"
+                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-red-700 bg-red-100 hover:bg-red-200 transition-colors uppercase">
+                                <i class="fas fa-trash-alt me-1"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<style>
+    /* Estilo premium para DataTable */
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        outline: none;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #2563eb !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #eff6ff !important;
+        color: #2563eb !important;
+        border: none !important;
+        border-radius: 0.5rem;
+    }
+
+    table.dataTable.no-footer {
+        border-bottom: 1px solid #e2e8f0;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        // Usamos la variable que viene de Flask directamente
+        const filtroInicial = "{{ filtro_predeterminado }}";
+
+        const table = $('#tabla-empresas').DataTable({
+            "search": {
+                "search": filtroInicial
+            },
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            },
+            "pageLength": 10,
+            "dom": '<"flex flex-col md:flex-row justify-between items-center p-4 gap-4"lf>rt<"flex flex-col md:flex-row justify-between items-center p-4 gap-4"ip>',
+            "orderCellsTop": true,
+            "searchDelay": 350  // Pequeño delay para mejor rendimiento
+        });
+
+        // Aplicar filtros por columna de forma independiente
+        $('.column-filter').each(function (index) {
+            $(this).on('keyup change', function () {
+                const colIndex = $(this).closest('th').index();
+                // Usar búsqueda por columna específica (no afecta búsqueda global)
+                table.column(colIndex).search(this.value, false, true).draw();
+            });
+        });
+
+        // Evitar que el clic en el input active el ordenado de la columna
+        $('.column-filter').on('click', function (e) {
+            e.stopPropagation();
+        });
+
+        // Limpiar todos los filtros con un botón (opcional)
+        $('#limpiar-filtros').on('click', function () {
+            $('.column-filter').val('');
+            table.columns().search('').draw();
+        });
+    });
+</script>
+{% endblock %}

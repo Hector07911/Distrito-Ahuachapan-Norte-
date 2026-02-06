@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="text-xl font-semibold mb-4">Importar archivo Excel</h2>
+
+<div class="bg-white rounded shadow p-6 max-w-xl">
+    <form method="POST" enctype="multipart/form-data">
+        <label class="block mb-2 font-medium">Seleccionar archivo Excel</label>
+        <input type="file" name="archivo" required class="block w-full border rounded px-3 py-2">
+
+        <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Analizar archivo
+        </button>
+    </form>
+</div>
+
+{% endblock %}

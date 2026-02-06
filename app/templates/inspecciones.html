@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h3 class="text-3xl font-bold text-slate-900 tracking-tight">Inspecciones Técnicas</h3>
+        <p class="text-slate-500 mt-2">Seguimiento y control de visitas a establecimientos</p>
+    </div>
+</div>
+
+</div>
+
+<!-- SECCIÓN 1: SOLICITUDES EN CURSO -->
+<div class="mb-10">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="p-2 bg-amber-100 text-amber-600 rounded-lg">
+            <i class="fas fa-clock"></i>
+        </div>
+        <h4 class="text-xl font-bold text-slate-800">Solicitudes Pendientes de Aprobación</h4>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <table class="min-w-full divide-y divide-slate-200">
+            <thead class="bg-slate-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Negocio
+                    </th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Estado
+                    </th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for e in empresas_tramite %}
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-bold text-slate-900">{{ e.nombre_negocio }}</div>
+                        <div class="text-xs text-slate-500 font-mono">{{ e.codigo }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span
+                            class="px-2 py-1 rounded-lg text-[10px] font-black uppercase {{ 'bg-blue-100 text-blue-700' if e.estado_actual == 'SOLICITUD' else 'bg-amber-100 text-amber-700' }}">
+                            {{ '📝 SOLICITUD' if e.estado_actual == 'SOLICITUD' else '⏳ EN TRÁMITE' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <a href="{{ url_for('main.detalle_empresa', id=e.id) }}"
+                            class="text-blue-600 hover:text-blue-800 font-bold text-xs">
+                            VER EXPEDIENTE
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="px-6 py-8 text-center text-slate-400 italic text-sm">No hay solicitudes
+                        pendientes en este momento.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="flex items-center gap-3 mb-4">
+    <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+        <i class="fas fa-clipboard-check"></i>
+    </div>
+    <h4 class="text-xl font-bold text-slate-800">Historial de Visitas Técnicas</h4>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden p-4">
+    <table id="tabla-inspecciones" class="min-w-full divide-y divide-slate-200">
+        <thead class="bg-slate-50">
+            <tr>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Establecimiento</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Inspector</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones
+                </th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-slate-200">
+            {% for i in inspecciones_list %}
+            <tr>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-bold text-slate-900">{{ i.empresa.nombre_negocio }}</div>
+                    <div class="text-xs text-slate-500">{{ i.empresa.codigo }}</div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-sm text-slate-700">{{ i.inspector or 'No asignado' }}</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-900">
+                    {{ i.fecha.strftime('%d/%m/%Y') if i.fecha else '—' }}
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    <span
+                        class="px-2 py-1 rounded-full text-xs font-bold {{ 'bg-emerald-100 text-emerald-800' if i.estado == 'COMPLETADO' else 'bg-amber-100 text-amber-800' }}">
+                        {{ i.estado or 'PENDIENTE' }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <a href="{{ url_for('main.detalle_empresa', id=i.empresa_id) }}"
+                        class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-eye me-1"></i> EXPEDIENTE
+                    </a>
+                    {% if current_user.role.nombre == 'ADMIN' %}
+                    <form action="{{ url_for('main.eliminar_inspeccion', id=i.id) }}" method="POST"
+                        class="inline-block ms-1" onsubmit="return confirm('⚠️ ¿Eliminar registro de inspección?');">
+                        <button type="submit"
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-lg text-rose-700 bg-rose-100 hover:bg-rose-200 transition-colors">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Importante: Destruir si ya existe para evitar duplicados
+        if ($.fn.DataTable.isDataTable('#tabla-inspecciones')) {
+            $('#tabla-inspecciones').DataTable().destroy();
+        }
+
+        $('#tabla-inspecciones').DataTable({
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            },
+            "pageLength": 10,
+            "columnDefs": [
+                { "targets": [4], "orderable": false } // Acciones no se ordena
+            ]
+        });
+    });
+</script>
+{% endblock %}

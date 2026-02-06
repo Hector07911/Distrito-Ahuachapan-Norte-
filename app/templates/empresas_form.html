@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto">
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                {% if empresa.id %}Editar Empresa{% else %}Nueva Empresa{% endif %}
+            </h2>
+            <p class="mt-1 text-sm text-slate-500">Completa la información de la empresa municipal.</p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <!-- Botón superior eliminado para evitar duplicidad -->
+        </div>
+    </div>
+
+    <form method="POST" class="bg-white shadow-sm ring-1 ring-slate-900/5 sm:rounded-xl md:col-span-2">
+        <div class="px-4 py-6 sm:p-8">
+            <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+
+                <div class="sm:col-span-2">
+                    <label for="codigo" class="block text-sm font-medium leading-6 text-slate-900">Código</label>
+                    <div class="mt-2">
+                        <input type="text" name="codigo" id="codigo" value="{{ empresa.codigo or '' }}"
+                            placeholder="Ej: CAT-EM-001"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-4">
+                    <label for="nombre" class="block text-sm font-medium leading-6 text-slate-900">Nombre del Negocio
+                        *</label>
+                    <div class="mt-2">
+                        <input type="text" name="nombre" id="nombre" value="{{ empresa.nombre_negocio or '' }}" required
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="propietario" class="block text-sm font-medium leading-6 text-slate-900">Propietario /
+                        Rep. Legal</label>
+                    <div class="mt-2">
+                        <input type="text" name="propietario" id="propietario" value="{{ empresa.propietario or '' }}"
+                            placeholder="Ej: Juan Pérez"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="distrito" class="block text-sm font-medium leading-6 text-slate-900">Distrito</label>
+                    <div class="mt-2">
+                        <input type="text" name="distrito" id="distrito" value="{{ empresa.distrito or '' }}"
+                            placeholder="Ej: Ahuachapán Norte"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label for="telefono" class="block text-sm font-medium leading-6 text-slate-900">Teléfono</label>
+                    <div class="mt-2 text-xs text-slate-500 mb-1">Ej: 2441-0000 o 7000-0000</div>
+                    <div class="mt-2">
+                        <input type="text" name="telefono" id="telefono"
+                            value="{{ empresa.contactos | selectattr('tipo', 'equalto', 'TELEFONO') | map(attribute='valor') | first or '' }}"
+                            placeholder="Teléfono de contacto"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-3">
+                    <label for="email" class="block text-sm font-medium leading-6 text-slate-900">Correo
+                        Electrónico</label>
+                    <div class="mt-2 text-xs text-slate-500 mb-1">Ej: ejemplo@correo.com</div>
+                    <div class="mt-2">
+                        <input type="email" name="email" id="email"
+                            value="{{ empresa.contactos | selectattr('tipo', 'equalto', 'EMAIL') | map(attribute='valor') | first or '' }}"
+                            placeholder="correo@ejemplo.com"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="col-span-full">
+                    <label for="giro" class="block text-sm font-medium leading-6 text-slate-900">Giro o Actividad
+                        Económica</label>
+                    <div class="mt-2">
+                        <input type="text" name="giro" id="giro" value="{{ empresa.giro or '' }}"
+                            placeholder="Ej: VENTA DE ROPA, RESTAURANTE, ETC."
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="col-span-full">
+                    <label for="direccion" class="block text-sm font-medium leading-6 text-slate-900">Dirección</label>
+                    <div class="mt-2">
+                        <textarea id="direccion" name="direccion" rows="2"
+                            placeholder="Dirección completa de la empresa"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">{{ empresa.direccion or '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="nit" class="block text-sm font-medium leading-6 text-slate-900">NIT</label>
+                    <div class="mt-2">
+                        <input type="text" name="nit" id="nit" value="{{ empresa.nit or '' }}"
+                            placeholder="0000-000000-000-0"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="nrc" class="block text-sm font-medium leading-6 text-slate-900">NRC</label>
+                    <div class="mt-2">
+                        <input type="text" name="nrc" id="nrc" value="{{ empresa.nrc or '' }}"
+                            placeholder="Registro de Contribuyente"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="estado" class="block text-sm font-medium leading-6 text-slate-900">Estado Actual</label>
+                    <div class="mt-2">
+                        <select name="estado" id="estado"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                            <option value="SOLICITUD" {% if empresa.estado_actual=='SOLICITUD' %}selected{% endif %}>📝
+                                SOLICITUD / NUEVA</option>
+                            <option value="EN TRAMITE" {% if empresa.estado_actual=='EN TRAMITE' %}selected{% endif %}>⏳
+                                EN TRÁMITE</option>
+                            <option value="ACTIVO" {% if empresa.estado_actual=='ACTIVO' %}selected{% endif %}>✅ ACTIVO
+                            </option>
+                            <option value="CERRADO" {% if empresa.estado_actual=='CERRADO' %}selected{% endif %}>❌
+                                CERRADO</option>
+                            <option value="INACTIVO" {% if empresa.estado_actual=='INACTIVO' %}selected{% endif %}>⏸️
+                                INACTIVO</option>
+                            <option value="SUSPENDIDO" {% if empresa.estado_actual=='SUSPENDIDO' %}selected{% endif %}>
+                                ⚠️ SUSPENDIDO</option>
+                            <option value="CANCELADO" {% if empresa.estado_actual=='CANCELADO' %}selected{% endif %}>🚫
+                                CANCELADO</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-span-full border-t border-slate-100 pt-6">
+                    <h3 class="text-sm font-bold text-blue-800 uppercase tracking-wider mb-4">🏠 Datos Fiscales y Notas
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="fecha_registro" class="block text-sm font-medium leading-6 text-slate-900">Fecha
+                                de inscripción</label>
+                            <input type="date" name="fecha_registro" id="fecha_registro"
+                                value="{{ empresa.fecha_inscripcion.strftime('%Y-%m-%d') if empresa.fecha_inscripcion else '' }}"
+                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        </div>
+                        <div>
+                            <label for="pago_anio" class="block text-sm font-medium leading-6 text-slate-900">Año de
+                                Arbitrio</label>
+                            <input type="number" name="pago_anio" id="pago_anio"
+                                value="{{ empresa.pagos | sort(attribute='anio', reverse=true) | map(attribute='anio') | first or 2026 }}"
+                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        </div>
+                        <div>
+                            <label for="pago_cuota" class="block text-sm font-medium leading-6 text-slate-900">Cuota
+                                Mensual ($)</label>
+                            <input type="number" step="0.01" name="pago_cuota" id="pago_cuota"
+                                value="{{ empresa.pagos | sort(attribute='anio', reverse=true) | map(attribute='monto_mensual') | first or '' }}"
+                                placeholder="Ej: 15.00"
+                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-full">
+                    <label for="notas" class="block text-sm font-medium leading-6 text-slate-900">Descripción / Notas
+                        Internas</label>
+                    <div class="mt-2">
+                        <textarea id="notas" name="notas" rows="4"
+                            placeholder="Cualquier información adicional relevante..."
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">{{ empresa.notas or '' }}</textarea>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div
+            class="flex items-center justify-end gap-x-6 border-t border-slate-900/10 px-4 py-4 sm:px-8 bg-slate-50 rounded-b-xl">
+            <a href="{{ url_for('main.empresas') }}" type="button"
+                class="text-sm font-semibold leading-6 text-slate-900 hover:text-slate-700">Cancelar</a>
+            <button type="submit"
+                class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Guardar
+                cambios</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

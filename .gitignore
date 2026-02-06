@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+instance/
+uploads/
+exports/
+migrations/
+*.xlsx
+*.csv
+*.pyc
+.pytest_cache/
+.DS_Store

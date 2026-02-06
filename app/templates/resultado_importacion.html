@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-2xl font-bold leading-7 text-slate-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Resultado de Importación
+            </h2>
+            <p class="mt-1 text-sm text-slate-500">Resumen de la importación de datos desde Excel.</p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <a href="/importar"
+                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                Nueva Importación
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-sm ring-1 ring-slate-900/5 sm:rounded-xl">
+        <div class="px-4 py-6 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                Hoja
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                Registros OK
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                Errores
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                Estado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                        {% for hoja, result in resultados.items() %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                {{ hoja }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {% if result.ok is defined %}
+                                <span
+                                    class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    {{ result.ok }}
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
+                                    {{ result }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {% if result.errors is defined and result.errors %}
+                                <span
+                                    class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    {{ result.errors|length }}
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                    0
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {% if result.errors is defined and result.errors %}
+                                <span
+                                    class="inline-flex items-center gap-x-1.5 rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
+                                    <svg class="h-1.5 w-1.5" viewBox="0 0 6 6" fill="currentColor">
+                                        <circle cx="3" cy="3" r="3" />
+                                    </svg>
+                                    Con errores
+                                </span>
+                                {% else %}
+                                <span
+                                    class="inline-flex items-center gap-x-1.5 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                    <svg class="h-1.5 w-1.5" viewBox="0 0 6 6" fill="currentColor">
+                                        <circle cx="3" cy="3" r="3" />
+                                    </svg>
+                                    Exitoso
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                {% if result.errors is defined and result.errors %}
+                                <a href="/importar/corregir/{{ hoja }}"
+                                    class="text-brand-600 hover:text-brand-900 font-medium">
+                                    Corregir errores
+                                </a>
+                                {% else %}
+                                <span class="text-slate-400">Sin acciones</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 truncate">Total Importados</dt>
+                            <dd class="text-lg font-medium text-slate-900">
+                                {% set total_ok = 0 %}
+                                {% for res in resultados.values() %}
+                                {% if res is mapping and res.ok is defined %}
+                                {% set total_ok = total_ok + res.ok %}
+                                {% endif %}
+                                {% endfor %}
+                                {{ total_ok }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-slate-500 truncate">Total Errores</dt>
+                            <dd class="text-lg font-medium text-slate-900">
+                                {% set total_err = 0 %}
+                                {% for res in resultados.values() %}
+                                {% if res is mapping and res.errors is defined %}
+                                {% set total_err = total_err + res.errors|length %}
+                                {% endif %}
+                                {% endfor %}
+                                {{ total_err }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-slate-500 truncate">Hojas Procesadas</dt>
+                        <dd class="text-lg font-medium text-slate-900">
+                            {{ resultados|length }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="text-2xl font-bold mb-4">Hoja: {{ tipo }}</h3>
+
+<input type="text" placeholder="Buscar en tabla..." class="border px-3 py-2 mb-4 w-full"
+    onkeyup="filtrarTabla(this.value)">
+
+<table class="w-full border">
+    <thead>
+        <tr>
+            {% for col in data[0].keys() %}
+            <th class="border px-2 py-1 bg-slate-100">{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for fila in data %}
+        <tr>
+            {% for valor in fila.values() %}
+            <td class="border px-2 py-1">{{ valor }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    function filtrarTabla(valor) {
+        valor = valor.toLowerCase()
+        document.querySelectorAll("tbody tr").forEach(fila => {
+            fila.style.display = fila.innerText.toLowerCase().includes(valor) ? "" : "none"
+        })
+    }
+</script>
+
+{% endblock %}
