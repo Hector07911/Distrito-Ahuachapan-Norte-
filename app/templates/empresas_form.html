@@ -139,33 +139,86 @@
                 </div>
 
                 <div class="col-span-full border-t border-slate-100 pt-6">
-                    <h3 class="text-sm font-bold text-blue-800 uppercase tracking-wider mb-4">🏠 Datos Fiscales y Notas
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label for="fecha_registro" class="block text-sm font-medium leading-6 text-slate-900">Fecha
-                                de inscripción</label>
-                            <input type="date" name="fecha_registro" id="fecha_registro"
-                                value="{{ empresa.fecha_inscripcion.strftime('%Y-%m-%d') if empresa.fecha_inscripcion else '' }}"
-                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-blue-800 uppercase tracking-wider">🏠 Historial de Arbitrios
+                            (Años y Cuotas)</h3>
+                        <button type="button" onclick="agregarFilaPago()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Añadir otro año
+                        </button>
+                    </div>
+
+                    <div id="contenedor-pagos" class="space-y-3">
+                        {% set pagos_sorted = empresa.pagos | sort(attribute='anio', reverse=true) if empresa else [] %}
+                        {% if pagos_sorted %}
+                        {% for pago in pagos_sorted %}
+                        <div
+                            class="fila-pago grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200 relative">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Año</label>
+                                <input type="number" name="pago_anio[]" value="{{ pago.anio }}"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Mensual ($)</label>
+                                <input type="number" step="0.01" name="pago_cuota[]" value="{{ pago.monto_mensual }}"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div class="flex items-end pb-1">
+                                <button type="button" onclick="this.closest('.fila-pago').remove()"
+                                    class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1">Eliminar</button>
+                            </div>
                         </div>
-                        <div>
-                            <label for="pago_anio" class="block text-sm font-medium leading-6 text-slate-900">Año de
-                                Arbitrio</label>
-                            <input type="number" name="pago_anio" id="pago_anio"
-                                value="{{ empresa.pagos | sort(attribute='anio', reverse=true) | map(attribute='anio') | first or 2026 }}"
-                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        {% endfor %}
+                        {% else %}
+                        <!-- Fila vacía inicial para nuevas empresas -->
+                        <div
+                            class="fila-pago grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Año</label>
+                                <input type="number" name="pago_anio[]" value="{{ 2026 }}"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Mensual ($)</label>
+                                <input type="number" step="0.01" name="pago_cuota[]" placeholder="0.00"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div></div>
                         </div>
-                        <div>
-                            <label for="pago_cuota" class="block text-sm font-medium leading-6 text-slate-900">Cuota
-                                Mensual ($)</label>
-                            <input type="number" step="0.01" name="pago_cuota" id="pago_cuota"
-                                value="{{ empresa.pagos | sort(attribute='anio', reverse=true) | map(attribute='monto_mensual') | first or '' }}"
-                                placeholder="Ej: 15.00"
-                                class="mt-2 block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
+
+                <script>
+                    function agregarFilaPago() {
+                        const contenedor = document.getElementById('contenedor-pagos');
+                        const nuevaFila = document.createElement('div');
+                        nuevaFila.className = 'fila-pago grid grid-cols-1 md:grid-cols-3 gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200 relative';
+                        nuevaFila.innerHTML = `
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Año</label>
+                                <input type="number" name="pago_anio[]" value="${new Date().getFullYear()}"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Cuota Mensual ($)</label>
+                                <input type="number" step="0.01" name="pago_cuota[]" placeholder="0.00"
+                                    class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm">
+                            </div>
+                            <div class="flex items-end pb-1">
+                                <button type="button" onclick="this.closest('.fila-pago').remove()" 
+                                    class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1">Eliminar</button>
+                            </div>
+                        `;
+                        contenedor.prepend(nuevaFila);
+                    }
+                </script>
 
                 <div class="col-span-full">
                     <label for="notas" class="block text-sm font-medium leading-6 text-slate-900">Descripción / Notas

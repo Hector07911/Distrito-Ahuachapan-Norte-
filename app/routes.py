@@ -267,19 +267,20 @@ def nueva_empresa():
             if email_raw:
                 db.session.add(Contacto(empresa_id=empresa.id, tipo='EMAIL', valor=email_raw.strip()))
 
-            # 5. GUARDADO DE PAGO INICIAL
-            pago_anio = request.form.get('pago_anio')
-            pago_cuota = request.form.get('pago_cuota')
-            if pago_anio and pago_cuota:
-                try:
-                    pago = HistorialPago(
-                        empresa_id=empresa.id,
-                        anio=int(pago_anio),
-                        monto_mensual=float(pago_cuota)
-                    )
-                    db.session.add(pago)
-                except ValueError:
-                    pass
+            # 5. GUARDADO DE PAGOS (Multi-año)
+            anios = request.form.getlist('pago_anio[]')
+            cuotas = request.form.getlist('pago_cuota[]')
+            
+            for anio, cuota in zip(anios, cuotas):
+                if anio and cuota:
+                    try:
+                        db.session.add(HistorialPago(
+                            empresa_id=empresa.id,
+                            anio=int(anio),
+                            monto_mensual=float(cuota)
+                        ))
+                    except ValueError:
+                        continue
 
             db.session.commit()
             flash(f'✅ Empresa "{nombre_input}" registrada exitosamente en el padrón.', 'success')
@@ -370,21 +371,35 @@ def editar_empresa(id):
                 else:
                     db.session.add(Contacto(empresa_id=empresa.id, tipo='EMAIL', valor=email_input.strip()))
 
-            # 4. GESTIÓN DE PAGOS
-            pago_anio = request.form.get('pago_anio')
-            pago_cuota = request.form.get('pago_cuota')
-            if pago_anio and pago_cuota:
-                try:
-                    anio_int = int(pago_anio)
-                    cuota_float = float(pago_cuota)
-                    # Buscar si ya existe pago para ese año
-                    pago_existente = next((p for p in empresa.pagos if p.anio == anio_int), None)
-                    if pago_existente:
-                        pago_existente.monto_mensual = cuota_float
-                    else:
-                        db.session.add(HistorialPago(empresa_id=empresa.id, anio=anio_int, monto_mensual=cuota_float))
-                except ValueError:
-                    pass
+            # 4. GESTIÓN DE PAGOS (Sincronización Multi-año)
+            anios_form = request.form.getlist('pago_anio[]')
+            cuotas_form = request.form.getlist('pago_cuota[]')
+            
+            # Convertimos a tipos correctos y filtramos vacíos
+            pagos_dict = {}
+            for a, c in zip(anios_form, cuotas_form):
+                if a and c:
+                    try:
+                        pagos_dict[int(a)] = float(c)
+                    except ValueError:
+                        continue
+
+            # Sincronizamos: eliminamos los que no están en el form y actualizamos/agregamos los que sí
+            # Eliminamos los que ya no vienen en el formulario
+            for pago_existente in list(empresa.pagos):
+                if pago_existente.anio not in pagos_dict:
+                    db.session.delete(pago_existente)
+                else:
+                    # Actualizamos el monto si cambió
+                    pago_existente.monto_mensual = pagos_dict.pop(pago_existente.anio)
+            
+            # Los que quedaron en pagos_dict son nuevos
+            for anio, cuota in pagos_dict.items():
+                db.session.add(HistorialPago(
+                    empresa_id=empresa.id,
+                    anio=anio,
+                    monto_mensual=cuota
+                ))
 
             db.session.commit()
             
