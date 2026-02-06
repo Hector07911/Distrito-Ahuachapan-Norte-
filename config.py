@@ -13,10 +13,14 @@ class Config:
     DATABASE_URL = os.getenv('DATABASE_URL')
     
     if DATABASE_URL:
-        # Ajuste para Heroku/Railway si usan postgres://
-        if DATABASE_URL.startswith("postgres://"):
-            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+        # Si existe DATABASE_URL (en Render/Railway), la usamos directamente
+        # Nos aseguramos de que use pymysql para evitar errores de driver
+        if DATABASE_URL.startswith("mysql://"):
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
+        elif DATABASE_URL.startswith("postgres://"):
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        else:
+            SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
         # Lógica para XAMPP local
         USER = os.getenv('MYSQL_USER', 'root')
