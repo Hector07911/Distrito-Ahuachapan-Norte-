@@ -181,8 +181,10 @@ def empresas():
             # Por defecto: Solo activas
             query = query.filter(Empresa.estado_actual == 'ACTIVO')
 
-        # 3. Ejecutar la consulta con ordenamiento
-        empresas_list = query.order_by(Empresa.nombre_negocio.asc()).all()
+        # 3. Ejecutar la consulta con ordenamiento y CARGA ANTICIPADA (Eager Loading)
+        # Esto evita el error de TIMEOUT en Render al traer contactos en una sola consulta
+        from sqlalchemy.orm import joinedload
+        empresas_list = query.options(joinedload(Empresa.contactos)).order_by(Empresa.nombre_negocio.asc()).all()
         
         return render_template(
             "empresas.html",
