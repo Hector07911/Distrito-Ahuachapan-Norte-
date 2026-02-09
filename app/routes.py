@@ -126,9 +126,12 @@ def index():
         total_con_rubro = sum(s['count'] for s in rubros_stats)
         cat_otros = max(0, total_activas - total_con_rubro)
 
-        # 3. Proyección (Scalar para evitar errores si no hay datos)
-        proyeccion_2026 = db.session.query(func.sum(HistorialPago.monto_mensual))\
-                            .filter(HistorialPago.anio == 2026).scalar() or 0
+        # 4. Info de Base de Datos (Cloud vs Local)
+        db_info = {
+            'color': 'emerald' if os.getenv('DATABASE_URL') else 'amber',
+            'icon': '☁️' if os.getenv('DATABASE_URL') else '💻',
+            'type': 'Cloud (Railway/Render)' if os.getenv('DATABASE_URL') else 'Local (XAMPP)'
+        }
         
         return render_template(
             "index.html",
@@ -139,7 +142,8 @@ def index():
             total_cerradas=total_cerradas,
             rubros_stats=rubros_stats,
             cat_otros=cat_otros,
-            proyeccion_2026=proyeccion_2026
+            proyeccion_2026=proyeccion_2026,
+            db_info=db_info
         )
 
     except Exception as e:
@@ -155,7 +159,8 @@ def index():
             total_cerradas=0, 
             rubros_stats=[], 
             cat_otros=0, 
-            proyeccion_2026=0
+            proyeccion_2026=0,
+            db_info={'color': 'slate', 'icon': '⚠️', 'type': 'Error de Conexión'}
         )
 
 @main.route("/empresas")
