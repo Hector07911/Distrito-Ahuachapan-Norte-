@@ -27,6 +27,18 @@ class Usuario(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+class Rubro(db.Model):
+    __tablename__ = 'rubros'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), unique=True, nullable=False)
+    descripcion = db.Column(db.String(255))
+    icono = db.Column(db.String(50), default='tag')
+    color = db.Column(db.String(50), default='blue')
+    categoria = db.Column(db.String(100)) # Opcional: para agrupar rubros
+
+    empresas = db.relationship('Empresa', backref='rubro', lazy=True)
+
 # --- Modelos Existentes ---
 
 
@@ -44,6 +56,7 @@ class Empresa(db.Model):
     fecha_inscripcion = db.Column(db.Date)
     estado_actual = db.Column(db.String(255), default="ACTIVO")
     notas = db.Column(db.Text)  # Notas u observaciones generales
+    rubro_id = db.Column(db.Integer, db.ForeignKey('rubros.id'), nullable=True)
     
     # Relaciones
     contactos = db.relationship('Contacto', backref='empresa', lazy=True)

@@ -74,7 +74,13 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm font-bold text-slate-900">{{ empresa.nombre_negocio }}</div>
-                        <div class="text-xs text-slate-500">{{ empresa.propietario or '—' }}</div>
+                        <div class="text-xs text-slate-500 mb-1">{{ empresa.propietario or '—' }}</div>
+                        {% if empresa.rubro %}
+                        <span
+                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-{{ empresa.rubro.color }}-50 text-{{ empresa.rubro.color }}-600 border border-{{ empresa.rubro.color }}-100 uppercase">
+                            {{ empresa.rubro.nombre }}
+                        </span>
+                        {% endif %}
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex flex-wrap gap-2">

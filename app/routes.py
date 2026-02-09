@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 import os
-from app.models import Empresa, Contacto, Inspeccion, EmpresaCerrada, HistorialPago, Role, Usuario
+from app.models import Empresa, Contacto, Inspeccion, EmpresaCerrada, HistorialPago, Role, Usuario, Rubro
 from app import db
 from sqlalchemy import func
 from datetime import datetime
@@ -104,26 +104,27 @@ def index():
         total_inspecciones = db.session.query(Inspeccion).count()
         total_cerradas = db.session.query(EmpresaCerrada).count()
         
-        # 2. Categorización Dinámica con ILIKE (Solo para negocios ACTIVOS)
-        cat_tiendas = db.session.query(Empresa).filter(
-            Empresa.estado_actual != 'CERRADO',
-            ((Empresa.nombre_negocio.ilike('%TIENDA%')) | 
-             (Empresa.nombre_negocio.ilike('%ABARROTES%')) | 
-             (Empresa.nombre_negocio.ilike('%DESPENSA%')) |
-             (Empresa.nombre_negocio.ilike('%SUPER%')) |
-             (Empresa.nombre_negocio.ilike('%BAZAR%')))
-        ).count()
+        # 2. Categorización Dinámica por Rubros (Solo para negocios ACTIVOS)
+        rubros_stats = []
+        all_rubros = Rubro.query.order_by(Rubro.nombre).all()
+        
+        for r in all_rubros:
+            count = db.session.query(Empresa).filter(
+                Empresa.estado_actual == 'ACTIVO',
+                Empresa.rubro_id == r.id
+            ).count()
+            rubros_stats.append({
+                'id': r.id,
+                'nombre': r.nombre,
+                'icono': r.icono,
+                'color': r.color,
+                'count': count,
+                'categoria': r.categoria
+            })
 
-        cat_restaurantes = db.session.query(Empresa).filter(
-            Empresa.estado_actual != 'CERRADO',
-            ((Empresa.nombre_negocio.ilike('%RESTAURANTE%')) | 
-             (Empresa.nombre_negocio.ilike('%COMEDOR%')) | 
-             (Empresa.nombre_negocio.ilike('%PUPUSERIA%')) |
-             (Empresa.nombre_negocio.ilike('%CAFETERIA%')) |
-             (Empresa.nombre_negocio.ilike('%CAFE%')))
-        ).count()
-
-        cat_otros = max(0, total_activas - (cat_tiendas + cat_restaurantes))
+        # Conteos de empresas activas sin rubro asignado
+        total_con_rubro = sum(s['count'] for s in rubros_stats)
+        cat_otros = max(0, total_activas - total_con_rubro)
 
         # 3. Proyección (Scalar para evitar errores si no hay datos)
         proyeccion_2026 = db.session.query(func.sum(HistorialPago.monto_mensual))\
@@ -136,8 +137,7 @@ def index():
             total_tramites=total_tramites,
             total_inspecciones=total_inspecciones,
             total_cerradas=total_cerradas,
-            cat_tiendas=cat_tiendas,
-            cat_restaurantes=cat_restaurantes,
+            rubros_stats=rubros_stats,
             cat_otros=cat_otros,
             proyeccion_2026=proyeccion_2026
         )
@@ -146,7 +146,17 @@ def index():
         db.session.rollback() # Limpia la tubería si hubo Broken Pipe
         print(f"Error crítico en Dashboard: {e}")
         # Retornamos valores seguros para que el usuario no vea una página de error
-        return render_template('index.html', total=0, cerradas=0, cat_tiendas=0, cat_restaurantes=0, cat_otros=0)
+        return render_template(
+            'index.html', 
+            total_padron=0, 
+            total_activas=0, 
+            total_tramites=0, 
+            total_inspecciones=0, 
+            total_cerradas=0, 
+            rubros_stats=[], 
+            cat_otros=0, 
+            proyeccion_2026=0
+        )
 
 @main.route("/empresas")
 @login_required
@@ -158,28 +168,37 @@ def empresas():
         query = db.session.query(Empresa)
 
         # 2. Aplicar filtros de categoría
-        # NOTA: Ahora solo mostramos ACTIVAS por defecto o por categoría
-        if filtro == 'tienda':
+        if filtro.isdigit():
+            # Filtro por Rubro ID
+            query = query.filter(Empresa.rubro_id == int(filtro), Empresa.estado_actual == 'ACTIVO')
+            rubro_obj = Rubro.query.get(int(filtro))
+            titulo = f"Rubro: {rubro_obj.nombre}" if rubro_obj else "Rubro no encontrado"
+        elif filtro == 'tienda':
             query = query.filter(
                 (Empresa.nombre_negocio.ilike('%TIENDA%')) | 
                 (Empresa.nombre_negocio.ilike('%ABARROTES%'))
             ).filter(Empresa.estado_actual == 'ACTIVO')
+            titulo = "Listado de Tiendas"
         elif filtro == 'restaurante':
             query = query.filter(
                 (Empresa.nombre_negocio.ilike('%RESTAURANTE%')) | 
                 (Empresa.nombre_negocio.ilike('%COMEDOR%'))
             ).filter(Empresa.estado_actual == 'ACTIVO')
+            titulo = "Listado de Restaurantes"
         elif filtro == 'otro':
             query = query.filter(
+                Empresa.rubro_id == None,
                 ~Empresa.nombre_negocio.ilike('%TIENDA%'),
                 ~Empresa.nombre_negocio.ilike('%ABARROTES%'),
                 ~Empresa.nombre_negocio.ilike('%RESTAURANTE%'),
                 ~Empresa.nombre_negocio.ilike('%COMEDOR%'),
                 Empresa.estado_actual == 'ACTIVO'
             )
+            titulo = "Otros Negocios"
         else:
             # Por defecto: Solo activas
             query = query.filter(Empresa.estado_actual == 'ACTIVO')
+            titulo = "Listado de Activas"
 
         # 3. Ejecutar la consulta con ordenamiento y CARGA ANTICIPADA (Eager Loading)
         # Esto evita el error de TIMEOUT en Render al traer contactos en una sola consulta
@@ -189,7 +208,7 @@ def empresas():
         return render_template(
             "empresas.html",
             empresas=empresas_list,
-            titulo="Listado de Activas",
+            titulo=titulo,
             subtitulo="Negocios vigentes en el municipio",
             filtro_predeterminado=filtro
         )
@@ -235,7 +254,8 @@ def nueva_empresa():
                 nit=request.form.get('nit'),
                 nrc=request.form.get('nrc'),
                 estado_actual=estado_input,
-                notas=request.form.get('notas')
+                notas=request.form.get('notas'),
+                rubro_id=request.form.get('rubro_id') if request.form.get('rubro_id') else None
             )
             
             fecha_str = request.form.get('fecha_registro')
@@ -291,7 +311,8 @@ def nueva_empresa():
             print(f"Error al crear empresa: {e}")
             flash(f'❌ Error al guardar: {str(e)}. Verifique los datos e intente nuevamente.', 'error')
     
-    return render_template('empresas_form.html', empresa=None, action='crear')
+    rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    return render_template('empresas_form.html', empresa=None, action='crear', rubros_list=rubros_list)
 
 @main.route('/empresas/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -323,6 +344,7 @@ def editar_empresa(id):
             empresa.nit = request.form.get('nit') or empresa.nit
             empresa.nrc = request.form.get('nrc') or empresa.nrc
             empresa.notas = request.form.get('notas') or empresa.notas
+            empresa.rubro_id = request.form.get('rubro_id') if request.form.get('rubro_id') else None
             
             fecha_str = request.form.get('fecha_registro')
             if fecha_str:
@@ -417,7 +439,8 @@ def editar_empresa(id):
             print(f"Error editando empresa {id}: {e}")
             flash(f'❌ Error al actualizar: {str(e)}', 'error')
     
-    return render_template('empresas_form.html', empresa=empresa, action='editar')
+    rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    return render_template('empresas_form.html', empresa=empresa, action='editar', rubros_list=rubros_list)
 # --- IMPORTACIÓN MASIVA ---
 
 @main.route("/importar", methods=["GET", "POST"])
@@ -601,3 +624,107 @@ def detalle_empresa(id):
         print(f"Error al cargar detalle de empresa {id}: {e}")
         flash("Error de conexión al cargar el expediente", "error")
         return redirect(url_for('main.empresas'))
+
+# --- RUTAS DE RÚBRICAS ---
+
+@main.route('/rubros')
+@login_required
+def rubros():
+    rubros = Rubro.query.order_by(Rubro.nombre).all()
+    return render_template('rubros.html', rubros=rubros)
+
+@main.route('/rubro/nuevo', methods=['GET', 'POST'])
+@login_required
+def nuevo_rubro():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        icono = request.form.get('icono', 'tag').strip()
+        color = request.form.get('color', 'blue').strip()
+        categoria = request.form.get('categoria', '').strip()
+        
+        if not nombre:
+            flash('El nombre del rubro es obligatorio', 'error')
+            return render_template('rubro_form.html')
+        
+        # Verificar que no exista
+        existe = Rubro.query.filter_by(nombre=nombre).first()
+        if existe:
+            flash('Ya existe un rubro con ese nombre', 'error')
+            return render_template('rubro_form.html')
+        
+        try:
+            rubro = Rubro(
+                nombre=nombre,
+                descripcion=descripcion,
+                icono=icono,
+                color=color,
+                categoria=categoria
+            )
+            db.session.add(rubro)
+            db.session.commit()
+            flash('Rubro creado exitosamente', 'success')
+            return redirect(url_for('main.rubros'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear rubro: {str(e)}', 'error')
+    
+    return render_template('rubro_form.html')
+
+@main.route('/rubro/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_rubro(id):
+    rubro = Rubro.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        nombre = request.form.get('nombre', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        icono = request.form.get('icono', 'tag').strip()
+        color = request.form.get('color', 'blue').strip()
+        categoria = request.form.get('categoria', '').strip()
+        
+        if not nombre:
+            flash('El nombre del rubro es obligatorio', 'error')
+            return render_template('rubro_form.html', rubro=rubro)
+        
+        # Verificar que no exista otro con el mismo nombre
+        existe = Rubro.query.filter(Rubro.nombre == nombre, Rubro.id != id).first()
+        if existe:
+            flash('Ya existe otro rubro con ese nombre', 'error')
+            return render_template('rubro_form.html', rubro=rubro)
+        
+        try:
+            rubro.nombre = nombre
+            rubro.descripcion = descripcion
+            rubro.icono = icono
+            rubro.color = color
+            rubro.categoria = categoria
+            db.session.commit()
+            flash('Rubro actualizado exitosamente', 'success')
+            return redirect(url_for('main.rubros'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar rubro: {str(e)}', 'error')
+    
+    return render_template('rubro_form.html', rubro=rubro)
+
+@main.route('/rubro/<int:id>/eliminar', methods=['POST'])
+@login_required
+def eliminar_rubro(id):
+    rubro = Rubro.query.get_or_404(id)
+    
+    # Verificar que no tenga empresas asociadas
+    empresas_count = Empresa.query.filter_by(rubro_id=id).count()
+    if empresas_count > 0:
+        flash(f'No se puede eliminar el rubro porque tiene {empresas_count} empresas asociadas', 'error')
+        return redirect(url_for('main.rubros'))
+    
+    try:
+        db.session.delete(rubro)
+        db.session.commit()
+        flash('Rubro eliminado exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar rubro: {str(e)}', 'error')
+    
+    return redirect(url_for('main.rubros'))

@@ -115,7 +115,24 @@
                     </div>
                 </div>
 
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-3">
+                    <label for="rubro_id" class="block text-sm font-medium leading-6 text-slate-900">Rubro /
+                        Categoría</label>
+                    <div class="mt-2">
+                        <select name="rubro_id" id="rubro_id"
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                            <option value="">-- Sin Categoría --</option>
+                            {% for r in rubros_list %}
+                            <option value="{{ r.id }}" {% if empresa.rubro_id==r.id %}selected{% endif %}>
+                                {{ r.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <p class="mt-1 text-xs text-slate-500 italic">Ej: Clínicas, Ventas de, Panaderías, etc.</p>
+                </div>
+
+                <div class="sm:col-span-3">
                     <label for="estado" class="block text-sm font-medium leading-6 text-slate-900">Estado Actual</label>
                     <div class="mt-2">
                         <select name="estado" id="estado"

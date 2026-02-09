@@ -51,10 +51,18 @@
                 </div>
                 <div>
                     <h4 class="font-black text-slate-800 uppercase leading-none">{{ empresa.nombre_negocio }}</h4>
-                    <span
-                        class="text-[10px] font-bold uppercase {{ 'text-emerald-500' if empresa.estado_actual == 'ACTIVO' else 'text-rose-500' }}">
-                        {{ empresa.estado_actual }}
-                    </span>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span
+                            class="text-[10px] font-bold uppercase {{ 'text-emerald-500' if empresa.estado_actual == 'ACTIVO' else 'text-rose-500' }}">
+                            {{ empresa.estado_actual }}
+                        </span>
+                        {% if empresa.rubro %}
+                        <span
+                            class="text-[10px] font-black px-2 py-0.5 rounded-md bg-{{ empresa.rubro.color }}-50 text-{{ empresa.rubro.color }}-600 border border-{{ empresa.rubro.color }}-100 uppercase">
+                            {{ empresa.rubro.nombre }}
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

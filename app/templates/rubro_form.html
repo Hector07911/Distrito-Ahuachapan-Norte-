@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+        <h3 class="text-3xl font-bold text-slate-900 tracking-tight">
+            {% if rubro %}Editar Rubro{% else %}Nuevo Rubro{% endif %}
+        </h3>
+        <p class="text-slate-500 mt-2">Define las características de la categoría de negocios.</p>
+    </div>
+
+    <form method="POST" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-8 space-y-6">
+            <div>
+                <label for="nombre" class="block text-sm font-bold text-slate-700 mb-2">Nombre del Rubro *</label>
+                <input type="text" name="nombre" id="nombre" value="{{ rubro.nombre if rubro else '' }}" required
+                    placeholder="Ej: Farmacias, Talleres, etc."
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+            </div>
+
+            <div>
+                <label for="descripcion" class="block text-sm font-bold text-slate-700 mb-2">Descripción</label>
+                <textarea name="descripcion" id="descripcion" rows="3" placeholder="Breve descripción de este rubro..."
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">{{ rubro.descripcion if rubro else '' }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="icono" class="block text-sm font-bold text-slate-700 mb-2">Icono Representativo</label>
+                    <select name="icono" id="icono"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-blue-500">
+                        <option value="tag" {% if rubro and rubro.icono=='tag' %}selected{% endif %}>🏷️ Etiqueta
+                        </option>
+                        <option value="shopping" {% if rubro and rubro.icono=='shopping' %}selected{% endif %}>🛒
+                            Comercio</option>
+                        <option value="food" {% if rubro and rubro.icono=='food' %}selected{% endif %}>🍽️ Alimentación
+                        </option>
+                        <option value="health" {% if rubro and rubro.icono=='health' %}selected{% endif %}>🏥 Salud
+                        </option>
+                        <option value="tool" {% if rubro and rubro.icono=='tool' %}selected{% endif %}>🛠️
+                            Servicios/Talleres</option>
+                        <option value="car" {% if rubro and rubro.icono=='car' %}selected{% endif %}>🚗 Automotriz
+                        </option>
+                        <option value="clothes" {% if rubro and rubro.icono=='clothes' %}selected{% endif %}>👕
+                            Ropa/Moda</option>
+                        <option value="home" {% if rubro and rubro.icono=='home' %}selected{% endif %}>🏠
+                            Ferreterías/Hogar</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="color" class="block text-sm font-bold text-slate-700 mb-2">Color de
+                        Identificación</label>
+                    <select name="color" id="color"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-blue-500">
+                        <option value="blue" {% if rubro and rubro.color=='blue' %}selected{% endif %}>Azul</option>
+                        <option value="purple" {% if rubro and rubro.color=='purple' %}selected{% endif %}>Púrpura
+                        </option>
+                        <option value="orange" {% if rubro and rubro.color=='orange' %}selected{% endif %}>Naranja
+                        </option>
+                        <option value="green" {% if rubro and rubro.color=='green' %}selected{% endif %}>Verde</option>
+                        <option value="rose" {% if rubro and rubro.color=='rose' %}selected{% endif %}>Rosa</option>
+                        <option value="indigo" {% if rubro and rubro.color=='indigo' %}selected{% endif %}>Índigo
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label for="categoria" class="block text-sm font-bold text-slate-700 mb-2">Agrupación (Opcional)</label>
+                <input type="text" name="categoria" id="categoria" value="{{ rubro.categoria if rubro else '' }}"
+                    placeholder="Ej: Sector Primario, Servicios, etc."
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+            </div>
+        </div>
+
+        <div class="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
+            <a href="{{ url_for('main.rubros') }}"
+                class="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all">
+                Guardar Rubro
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
