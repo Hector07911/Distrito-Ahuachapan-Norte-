@@ -116,20 +116,21 @@
                 </div>
 
                 <div class="sm:col-span-3">
-                    <label for="rubro_id" class="block text-sm font-medium leading-6 text-slate-900">Rubro /
+                    <label for="rubro_nombre" class="block text-sm font-medium leading-6 text-slate-900">Rubro /
                         Categoría</label>
-                    <div class="mt-2">
-                        <select name="rubro_id" id="rubro_id"
-                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
-                            <option value="">-- Sin Categoría --</option>
-                            {% for r in rubros_list %}
-                            <option value="{{ r.id }}" {% if empresa.rubro_id==r.id %}selected{% endif %}>
-                                {{ r.nombre }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="mt-2 text-xs text-slate-500 mb-1 italic">Escribe uno nuevo o selecciona uno existente
                     </div>
-                    <p class="mt-1 text-xs text-slate-500 italic">Ej: Clínicas, Ventas de, Panaderías, etc.</p>
+                    <div class="mt-1">
+                        <input list="rubros-data" name="rubro_nombre" id="rubro_nombre"
+                            value="{{ empresa.rubro.nombre if empresa and empresa.rubro else '' }}"
+                            placeholder="Ej: Clínicas, Farmacia, etc."
+                            class="block w-full rounded-md border-0 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
+                        <datalist id="rubros-data">
+                            {% for r in rubros_list %}
+                            <option value="{{ r.nombre }}">
+                                {% endfor %}
+                        </datalist>
+                    </div>
                 </div>
 
                 <div class="sm:col-span-3">

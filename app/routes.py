@@ -31,6 +31,56 @@ def parse_combined_contact(raw_value):
     
     return email, telefono
 
+def get_or_create_rubro(nombre_rubro):
+    if not nombre_rubro:
+        return None
+    nombre_rubro = nombre_rubro.strip()
+    try:
+        rubro = Rubro.query.filter(func.lower(Rubro.nombre) == func.lower(nombre_rubro)).first()
+        if not rubro:
+            rubro = Rubro(nombre=nombre_rubro, color='blue', icono='tag')
+            db.session.add(rubro)
+            db.session.commit()
+        return rubro.id
+    except Exception:
+        db.session.rollback()
+        return None
+
+@main.route('/migrate-db')
+@login_required
+def migrate_db():
+    if current_user.role.nombre != 'ADMIN':
+        return "Acceso denegado", 403
+    
+    try:
+        from sqlalchemy import text
+        # 1. Crear tabla rubros si no existe
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS rubros (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(100) NOT NULL UNIQUE,
+                descripcion VARCHAR(255),
+                icono VARCHAR(50) DEFAULT 'tag',
+                color VARCHAR(50) DEFAULT 'blue',
+                categoria VARCHAR(100)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """))
+        
+        # 2. Verificar y añadir columna rubro_id
+        # Primero intentamos añadirla, si falla es porque ya existe
+        try:
+            db.session.execute(text("ALTER TABLE empresas ADD COLUMN rubro_id INT DEFAULT NULL"))
+            db.session.execute(text("ALTER TABLE empresas ADD CONSTRAINT fk_empresa_rubro FOREIGN KEY (rubro_id) REFERENCES rubros(id) ON DELETE SET NULL"))
+        except Exception as e:
+            print(f"Columna rubro_id ya existe o error: {e}")
+        
+        db.session.commit()
+        flash("Base de datos actualizada correctamente con tablas de Rubros", "success")
+        return "Migración completada con éxito. <a href='/'>Volver al Inicio</a>"
+    except Exception as e:
+        db.session.rollback()
+        return f"Error en migración: {str(e)}"
+
 # --- RUTAS DE AUTENTICACIÓN ---
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -260,7 +310,7 @@ def nueva_empresa():
                 nrc=request.form.get('nrc'),
                 estado_actual=estado_input,
                 notas=request.form.get('notas'),
-                rubro_id=request.form.get('rubro_id') if request.form.get('rubro_id') else None
+                rubro_id=get_or_create_rubro(request.form.get('rubro_nombre'))
             )
             
             fecha_str = request.form.get('fecha_registro')
@@ -316,7 +366,11 @@ def nueva_empresa():
             print(f"Error al crear empresa: {e}")
             flash(f'❌ Error al guardar: {str(e)}. Verifique los datos e intente nuevamente.', 'error')
     
-    rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    try:
+        rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    except Exception:
+        db.session.rollback()
+        rubros_list = []
     return render_template('empresas_form.html', empresa=None, action='crear', rubros_list=rubros_list)
 
 @main.route('/empresas/editar/<int:id>', methods=['GET', 'POST'])
@@ -349,7 +403,7 @@ def editar_empresa(id):
             empresa.nit = request.form.get('nit') or empresa.nit
             empresa.nrc = request.form.get('nrc') or empresa.nrc
             empresa.notas = request.form.get('notas') or empresa.notas
-            empresa.rubro_id = request.form.get('rubro_id') if request.form.get('rubro_id') else None
+            empresa.rubro_id = get_or_create_rubro(request.form.get('rubro_nombre'))
             
             fecha_str = request.form.get('fecha_registro')
             if fecha_str:
@@ -444,7 +498,11 @@ def editar_empresa(id):
             print(f"Error editando empresa {id}: {e}")
             flash(f'❌ Error al actualizar: {str(e)}', 'error')
     
-    rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    try:
+        rubros_list = Rubro.query.order_by(Rubro.nombre).all()
+    except Exception:
+        db.session.rollback()
+        rubros_list = []
     return render_template('empresas_form.html', empresa=empresa, action='editar', rubros_list=rubros_list)
 # --- IMPORTACIÓN MASIVA ---
 
@@ -635,7 +693,12 @@ def detalle_empresa(id):
 @main.route('/rubros')
 @login_required
 def rubros():
-    rubros = Rubro.query.order_by(Rubro.nombre).all()
+    try:
+        rubros = Rubro.query.order_by(Rubro.nombre).all()
+    except Exception:
+        db.session.rollback()
+        rubros = []
+        flash("La tabla de rubros aún no ha sido creada en la base de datos.", "warning")
     return render_template('rubros.html', rubros=rubros)
 
 @main.route('/rubro/nuevo', methods=['GET', 'POST'])
