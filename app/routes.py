@@ -119,7 +119,8 @@ def index():
                 'icono': r.icono,
                 'color': r.color,
                 'count': count,
-                'categoria': r.categoria
+                'categoria': r.categoria,
+                'descripcion': r.descripcion
             })
 
         # Conteos de empresas activas sin rubro asignado
@@ -664,7 +665,7 @@ def nuevo_rubro():
             db.session.add(rubro)
             db.session.commit()
             flash('Rubro creado exitosamente', 'success')
-            return redirect(url_for('main.rubros'))
+            return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear rubro: {str(e)}', 'error')
@@ -701,7 +702,7 @@ def editar_rubro(id):
             rubro.categoria = categoria
             db.session.commit()
             flash('Rubro actualizado exitosamente', 'success')
-            return redirect(url_for('main.rubros'))
+            return redirect(url_for('main.index'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error al actualizar rubro: {str(e)}', 'error')
@@ -717,7 +718,7 @@ def eliminar_rubro(id):
     empresas_count = Empresa.query.filter_by(rubro_id=id).count()
     if empresas_count > 0:
         flash(f'No se puede eliminar el rubro porque tiene {empresas_count} empresas asociadas', 'error')
-        return redirect(url_for('main.rubros'))
+        return redirect(url_for('main.index'))
     
     try:
         db.session.delete(rubro)
@@ -727,4 +728,4 @@ def eliminar_rubro(id):
         db.session.rollback()
         flash(f'Error al eliminar rubro: {str(e)}', 'error')
     
-    return redirect(url_for('main.rubros'))
+    return redirect(url_for('main.index'))
