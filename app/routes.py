@@ -148,8 +148,10 @@ def index():
     
     try:
         # 1. Conteos Generales
-        total_padrón = db.session.query(Empresa).count()
-        total_activas = db.session.query(Empresa).filter(Empresa.estado_actual == 'ACTIVO').count()
+        total_padrón = Empresa.query.count()
+        # Debugging Activas
+        total_activas = Empresa.query.filter_by(estado_actual='ACTIVO').count()
+        print(f"DEBUG: Total Activas calculado: {total_activas}")
         total_tramites = db.session.query(Empresa).filter(Empresa.estado_actual.in_(['SOLICITUD', 'EN TRAMITE'])).count()
         total_inspecciones = db.session.query(Inspeccion).count()
         total_cerradas = db.session.query(EmpresaCerrada).count()
